@@ -80,14 +80,49 @@ In your browser's local storage, for the specific browser and device you used.
   npx serve .
   ```
 
+## Instagram sync (optional)
+
+Two-way sync with an Instagram **Business or Creator** account: events you tick
+for sharing get posted, and posts you make in the Instagram app appear here as
+events.
+
+This is the one feature that needs a server. Meta downloads your photos from a
+public address rather than accepting an upload, and the app secret must never sit
+in a page anyone can view the source of — so a double-clicked file cannot do it.
+
+```
+node server/server.js
+```
+
+No `npm install` — the server uses only what ships with Node 18+. Full setup,
+including the Meta app review you'll need, is in
+[server/SETUP-INSTAGRAM.md](server/SETUP-INSTAGRAM.md).
+
+**Nothing posts by itself.** Ticking *Share to Instagram* on an event puts it in a
+queue on the Instagram tab; it goes out only when you press Publish on that
+specific event. Photos stay private until that moment, and only the photos of the
+event being posted are ever exposed.
+
+Without the server the app runs exactly as before, fully offline — the Instagram
+tab simply explains what it needs.
+
 ## Files
 
 ```
-index.html            the page
-assets/styles.css     styling, light and dark
-assets/app.js         records, rendering, import/export
-assets/storage.js     local persistence (IndexedDB, localStorage fallback)
-assets/xlsx-lite.js   dependency-free .xlsx reader/writer
+index.html                  the page
+assets/styles.css           styling, light and dark
+assets/app.js               records, rendering, import/export
+assets/storage.js           local persistence (IndexedDB, localStorage fallback)
+assets/xlsx-lite.js         dependency-free .xlsx reader/writer
+assets/backend.js           optional link to the server
+assets/instagram-ui.js      the Instagram tab and approval queue
+
+server/server.js            HTTP server, static hosting, API
+server/lib/instagram.js     Graph API client: OAuth, publishing, media
+server/lib/sync.js          pulls Instagram posts in as events
+server/lib/store.js         records, photos and tokens on disk
+server/lib/config.js        configuration
+server/SETUP-INSTAGRAM.md   Meta app setup walkthrough
 ```
 
 `xlsx-lite.js` writes an uncompressed ZIP by hand and reads compressed ones using

@@ -357,7 +357,60 @@ textarea.input { resize: vertical; line-height: 1.5; }
 }
 .toast.is-error { background: var(--danger); color: #fff; }
 
+/* ------------------------------------------------------------- instagram */
+
+.chip-ig { background: #efe3f4; color: #7d3f96; border-color: transparent; font-weight: 600; }
+.chip-ig-queued { background: #fdf0d9; color: #8a5c12; border-color: transparent; font-weight: 600; }
+.chip-ig-failed { background: #fbe0e0; color: #9a2626; border-color: transparent; font-weight: 600; }
+
+@media (prefers-color-scheme: dark) {
+  .chip-ig { background: #3a2942; color: #d9a8ea; }
+  .chip-ig-queued { background: #3d3016; color: #e6c078; }
+  .chip-ig-failed { background: #3f2020; color: #eda0a0; }
+}
+
+.share-box {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; margin: 16px 0 0;
+}
+.share-box legend { font-size: 12.5px; font-weight: 600; padding: 0 6px; color: var(--text-soft); }
+.share-box label[for] { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 5px; }
+.share-box .hint { margin-top: 6px; }
+
+.connected { color: var(--accent); font-weight: 600; }
+.problem-list { margin: 8px 0 0; padding-left: 20px; font-size: 13.5px; color: var(--text-soft); }
+.problem-list li { margin: 3px 0; }
+.subhead { font-size: 14px; margin: 18px 0 6px; color: var(--text-soft); }
+
+.queue { list-style: none; margin: 12px 0 0; padding: 0; }
+.queue-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 0; border-top: 1px solid var(--border); flex-wrap: wrap;
+}
+.queue-title { font-weight: 600; font-size: 14.5px; }
+.queue-sub { font-size: 12.5px; color: var(--text-soft); margin-top: 2px; }
+.queue-error { color: var(--danger); }
+.queue-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-small { padding: 5px 10px; font-size: 13px; }
+
+code {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: .9em; background: var(--surface-2);
+  padding: 1px 5px; border-radius: 5px;
+}
+
 @media print {
   .app-header, .tabs, .toolbar, .result-count { display: none; }
   .event-card { break-inside: avoid; box-shadow: none; }
 }
+
+/* Site credit */
+.site-credit {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-soft);
+  padding: 28px 16px calc(28px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+.site-credit b { font-weight: 600; color: var(--text); }

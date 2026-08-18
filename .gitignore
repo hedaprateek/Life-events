@@ -1,1 +1,7 @@
 .claude/settings.local.json
+
+# Instagram credentials and the access token — never commit these.
+server/config.json
+
+# Records, photos and tokens live here.
+server/data/

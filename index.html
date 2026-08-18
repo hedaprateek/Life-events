@@ -27,6 +27,7 @@
   <button class="tab is-active" role="tab" data-tab="timeline">Timeline</button>
   <button class="tab" role="tab" data-tab="people">People</button>
   <button class="tab" role="tab" data-tab="gallery">Gallery</button>
+  <button class="tab" role="tab" data-tab="instagram">Instagram</button>
   <button class="tab" role="tab" data-tab="data">Import &amp; Export</button>
 </nav>
 
@@ -63,6 +64,9 @@
     <p class="panel-intro">Every photo you have added, newest event first. Click any photo to view it full size.</p>
     <div class="gallery-grid" id="gallery-grid"></div>
   </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <section class="panel" id="panel-instagram" role="tabpanel"></section>
 
   <!-- ---------------------------------------------------------------- -->
   <section class="panel" id="panel-data" role="tabpanel">
@@ -198,6 +202,18 @@
 
       <label class="check"><input type="checkbox" id="event-favorite"> Mark as a favourite ★</label>
 
+      <fieldset class="share-box" id="event-share-box" hidden>
+        <legend>Instagram</legend>
+        <label class="check"><input type="checkbox" id="event-share"> Share this to Instagram</label>
+        <p class="hint">Nothing is posted now. It joins the approval queue on the Instagram tab, where you press Publish.</p>
+        <div id="event-share-detail" hidden>
+          <label for="event-caption">Caption</label>
+          <textarea class="input" id="event-caption" rows="3" placeholder="Leave blank to use the story above."></textarea>
+          <p class="hint" id="event-share-warning"></p>
+        </div>
+        <p class="hint" id="event-share-state"></p>
+      </fieldset>
+
       <footer class="modal-foot">
         <button type="button" class="btn btn-danger" id="event-delete" hidden>Delete</button>
         <span class="spacer"></span>
@@ -271,10 +287,14 @@
   <img id="lightbox-img" alt="">
 </div>
 
+<footer class="site-credit"><b>Stunity Tech</b> · by Prateek</footer>
+
 <div class="toast" id="toast" hidden></div>
 
 <script src="assets/xlsx-lite.js"></script>
 <script src="assets/storage.js"></script>
+<script src="assets/backend.js"></script>
+<script src="assets/instagram-ui.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

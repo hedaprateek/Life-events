@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy this file to config.json and fill it in. See SETUP-INSTAGRAM.md. Environment variables of the same name take precedence.",
+
+  "PORT": 3000,
+  "PUBLIC_URL": "https://your-domain.example",
+
+  "IG_APP_ID": "",
+  "IG_APP_SECRET": "",
+
+  "INBOUND_POLL_MINUTES": 15,
+  "MEDIA_EXPOSURE_MINUTES": 60
+}

@@ -23,7 +23,7 @@
 
   var EVENT_HEADERS = [
     'ID', 'Date', 'Title', 'Category', 'People', 'Place', 'Story',
-    'Tags', 'Mood', 'Favourite', 'PhotoIDs', 'Created', 'Updated'
+    'Tags', 'Mood', 'Favourite', 'PhotoIDs', 'Instagram', 'Created', 'Updated'
   ];
   var PEOPLE_HEADERS = ['ID', 'Name', 'Relationship', 'Birthday', 'Notes', 'PhotoID'];
 
@@ -157,6 +157,12 @@
     if (!LifeStorage.saveRecords(state)) {
       toast('Could not save to this browser — storage is full. Export a backup now.', true);
     }
+    // When a server is running it holds the canonical copy, so mirror there too.
+    if (window.LifeBackend && LifeBackend.isAvailable()) {
+      LifeBackend.saveRecords(state).catch(function (err) {
+        toast('Saved locally, but the server rejected it: ' + err.message, true);
+      });
+    }
   }
 
   /* ------------------------------------------------------------------ *
@@ -255,6 +261,16 @@
     (event.tags || []).forEach(function (tag) {
       chips.push('<span class="chip chip-tag">' + escapeHtml(tag) + '</span>');
     });
+
+    var ig = event.instagram;
+    if (ig && ig.status === 'published') {
+      chips.push('<span class="chip chip-ig">◉ ' +
+        (ig.source === 'instagram' ? 'from Instagram' : 'on Instagram') + '</span>');
+    } else if (ig && ig.status === 'queued') {
+      chips.push('<span class="chip chip-ig-queued">◷ waiting to post</span>');
+    } else if (ig && ig.status === 'failed') {
+      chips.push('<span class="chip chip-ig-failed">⚠ post failed</span>');
+    }
 
     var photos = (event.photoIds || [])
       .map(function (id) { return LifeStorage.getPhoto(id); })
@@ -519,17 +535,86 @@
     $('event-photos').value = '';
 
     draft.photoIds = event ? (event.photoIds || []).slice() : [];
+    draft.instagram = event && event.instagram ? Object.assign({}, event.instagram) : null;
     renderPeoplePicker(event ? (event.personIds || []) : []);
     refreshEventPhotoStrip();
+    renderShareBox();
 
     openModal('event-modal');
     $('event-title').focus();
+  }
+
+  /** Shows the Instagram controls only when a server is actually available. */
+  function renderShareBox() {
+    var box = $('event-share-box');
+    if (!window.LifeBackend || !LifeBackend.isAvailable()) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+
+    var ig = draft.instagram || {};
+    var alreadyOut = ig.status === 'published';
+
+    $('event-share').checked = ig.status === 'queued' || ig.status === 'failed';
+    $('event-share').disabled = alreadyOut;
+    $('event-caption').value = ig.caption || '';
+
+    var state = '';
+    if (alreadyOut) {
+      state = ig.source === 'instagram'
+        ? 'This event came from Instagram.'
+        : 'Already posted to Instagram.';
+      if (ig.permalink) state += ' ';
+    } else if (ig.status === 'failed') {
+      state = 'Last attempt failed: ' + (ig.error || 'unknown error');
+    }
+    $('event-share-state').innerHTML = escapeHtml(state) +
+      (alreadyOut && ig.permalink
+        ? '<a href="' + escapeHtml(ig.permalink) + '" target="_blank" rel="noopener">View post</a>'
+        : '');
+
+    updateShareDetail();
+  }
+
+  function updateShareDetail() {
+    var checked = $('event-share').checked && !$('event-share').disabled;
+    $('event-share-detail').hidden = !checked;
+
+    // Instagram will not accept a post with no image, so say so before saving.
+    var warning = $('event-share-warning');
+    warning.textContent = draft.photoIds.length
+      ? ''
+      : 'Instagram needs at least one photo — add one above or this will fail to publish.';
+    warning.style.color = draft.photoIds.length ? '' : 'var(--danger)';
   }
 
   function refreshEventPhotoStrip() {
     renderPhotoStrip('event-photo-strip', draft.photoIds, function (id) {
       draft.photoIds = draft.photoIds.filter(function (existing) { return existing !== id; });
       refreshEventPhotoStrip();
+      updateShareDetail();
+    });
+  }
+
+  /**
+   * Works out the event's Instagram state from the form. A post that already
+   * went out is never rewritten — you cannot un-send it, so the record stands.
+   */
+  function buildInstagramState() {
+    var existing = draft.instagram;
+    if (existing && existing.status === 'published') return existing;
+
+    var box = $('event-share-box');
+    if (box.hidden) return existing || null; // no server: leave whatever was there
+
+    if (!$('event-share').checked) return null;
+
+    return Object.assign({}, existing, {
+      status: 'queued',
+      caption: $('event-caption').value.trim(),
+      source: 'life-events',
+      error: null
     });
   }
 
@@ -555,6 +640,7 @@
       mood: $('event-mood').value,
       favorite: $('event-favorite').checked,
       photoIds: draft.photoIds.slice(),
+      instagram: buildInstagramState(),
       createdAt: now,
       updatedAt: now
     };
@@ -677,6 +763,11 @@
         event.mood || '',
         event.favorite ? 'TRUE' : 'FALSE',
         (event.photoIds || []).join(', '),
+        event.instagram && event.instagram.permalink
+          ? event.instagram.permalink
+          : event.instagram && event.instagram.status
+            ? event.instagram.status
+            : '',
         event.createdAt || '',
         event.updatedAt || ''
       ]);
@@ -941,6 +1032,7 @@
         tags: incoming.tags || [],
         mood: incoming.mood || '',
         favorite: !!incoming.favorite,
+        instagram: incoming.instagram || null,
         // Keep only photo IDs this browser actually holds.
         photoIds: (incoming.photoIds || []).filter(function (id) { return LifeStorage.hasPhoto(id); }),
         createdAt: incoming.createdAt || new Date().toISOString(),
@@ -952,6 +1044,8 @@
         // Photos live only in the browser, so never let a spreadsheet drop them.
         if (!record.photoIds.length) record.photoIds = state.events[index].photoIds || [];
         record.createdAt = state.events[index].createdAt || record.createdAt;
+        // Spreadsheets carry no sync state; keep what the server knows.
+        if (!record.instagram) record.instagram = state.events[index].instagram || null;
         state.events[index] = record;
         updated.events++;
       } else {
@@ -1023,7 +1117,7 @@
         id: e.id || '', title: e.title || '', date: e.date || '', category: e.category || '',
         personNames: [], personIds: e.personIds || [], location: e.location || '',
         description: e.description || '', tags: e.tags || [], mood: e.mood || '',
-        favorite: !!e.favorite, photoIds: e.photoIds || [],
+        favorite: !!e.favorite, photoIds: e.photoIds || [], instagram: e.instagram || null,
         createdAt: e.createdAt || '', updatedAt: e.updatedAt || ''
       };
     });
@@ -1109,6 +1203,9 @@
         document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('is-active'); });
         tab.classList.add('is-active');
         $('panel-' + tab.dataset.tab).classList.add('is-active');
+        if (tab.dataset.tab === 'instagram' && window.LifeInstagramUI) {
+          LifeInstagramUI.render();
+        }
       });
     });
   }
@@ -1206,10 +1303,13 @@
       await addPhotoFiles(input.files, function (id) {
         draft.photoIds.push(id);
         refreshEventPhotoStrip();
+        updateShareDetail();
       });
       input.disabled = false;
       input.value = '';
     });
+
+    $('event-share').addEventListener('change', updateShareDetail);
 
     $('person-photo').addEventListener('change', async function () {
       var input = this;
@@ -1255,6 +1355,43 @@
    * Start
    * ------------------------------------------------------------------ */
 
+  /** Replaces local state with the server's copy, pulling down any new photos. */
+  async function reloadFromBackend() {
+    if (!window.LifeBackend || !LifeBackend.isAvailable()) return false;
+    var records = await LifeBackend.loadRecords();
+    state.people = records.people || [];
+    state.events = records.events || [];
+
+    try {
+      await LifeBackend.fetchMissingPhotos(usedPhotoIds());
+    } catch (err) {
+      toast('Some photos could not be downloaded from the server.', true);
+    }
+
+    LifeStorage.saveRecords(state);
+    renderAll();
+    return true;
+  }
+
+  // Surface for instagram-ui.js — kept deliberately small.
+  window.LifeEvents = {
+    getState: function () { return state; },
+    getEvent: function (id) {
+      return state.events.filter(function (e) { return e.id === id; })[0] || null;
+    },
+    setInstagramStatus: function (eventId, status) {
+      var event = window.LifeEvents.getEvent(eventId);
+      if (!event) return;
+      event.instagram = status
+        ? Object.assign({}, event.instagram, { status: status, error: null })
+        : null;
+      persist();
+      renderAll();
+    },
+    reloadFromBackend: reloadFromBackend,
+    toast: toast
+  };
+
   (async function init() {
     await LifeStorage.init();
 
@@ -1262,6 +1399,15 @@
     if (records) {
       state.people = records.people;
       state.events = records.events;
+    }
+
+    // A server, if there is one, wins — it may hold posts pulled from Instagram
+    // while this browser was closed.
+    try {
+      await LifeBackend.init();
+      if (LifeBackend.isAvailable()) await reloadFromBackend();
+    } catch (err) {
+      toast('Could not reach the Life Events server; working locally.', true);
     }
 
     bindTabs();
