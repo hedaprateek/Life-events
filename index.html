@@ -26,22 +26,17 @@
 .stunity-credit b{font-weight:500;color:var(--ink,inherit)}
 .stunity-credit[data-print-only]{display:none}
 .sc-link{
-  position:relative;margin-left:4px;padding-left:17px;
-  text-transform:none;letter-spacing:.02em;white-space:nowrap;
-  color:inherit;text-decoration:none;opacity:.78;
+  color:inherit;text-decoration:none;
   border-bottom:1px solid transparent;
-  transition:opacity .18s ease,border-color .18s ease;
+  transition:border-color .18s ease,opacity .18s ease;
 }
-.sc-link::before{content:"";position:absolute;left:0;top:50%;
-  width:9px;height:1px;background:currentColor;opacity:.5}
-.sc-link:hover{opacity:1;border-bottom-color:currentColor}
+.sc-link:hover{border-bottom-color:currentColor}
 .sc-link:focus-visible{outline:1px solid currentColor;outline-offset:3px;
-  border-radius:2px;opacity:1}
-@media (max-width:460px){
-  .sc-link{white-space:normal;margin-left:0;padding-left:0}
-  .sc-link::before{display:none}
+  border-radius:2px}
+@media print{
+  .sc-link{border-bottom:0!important;text-decoration:none!important;
+    color:inherit!important}
 }
-@media print{ .sc-link{display:none!important} }
 @media print{
   @page{margin-bottom:24mm}
   html body #stunityCredit.stunity-credit,html body #stunityCredit.stunity-credit[data-print-only]{
@@ -336,7 +331,7 @@
   <img id="lightbox-img" alt="">
 </div>
 
-<footer class="site-credit"><b>Stunity Tech</b> — by Prateek <a class="sc-link" href="https://stunity-tech.hedaprateek.workers.dev" target="_blank" rel="noopener">stunity-tech.hedaprateek.workers.dev</a></footer>
+<footer class="site-credit"><a class="sc-link" href="https://stunity-tech.hedaprateek.workers.dev" target="_blank" rel="noopener"><b>Stunity Tech</b></a> — by Prateek</footer>
 
 <div class="toast" id="toast" hidden></div>
 
@@ -346,6 +341,6 @@
 <script src="assets/instagram-ui.js"></script>
 <script src="assets/app.js"></script>
 
-<div class="stunity-credit" id="stunityCredit" data-print-only><span class="sc-dot"></span><span>Stunity Tech — by <b>Prateek</b></span></div>
+<div class="stunity-credit" id="stunityCredit" data-print-only><span class="sc-dot"></span><span><a class="sc-link" href="https://stunity-tech.hedaprateek.workers.dev" target="_blank" rel="noopener">Stunity Tech</a> — by <b>Prateek</b></span></div>
 </body>
 </html>
